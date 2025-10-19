@@ -14,18 +14,20 @@ from typing import Dict, Any, List
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import requests
+import uuid
 
-from appworld import AppWorld
+# Add agents directory to path
+sys.path.insert(0, str(Path(__file__).parent))
 
 # Import core agent logic
-from agents.green_agent import AuroraGreenAgent
+from aurora_core import AuroraGreenAgentCore
 
 # Create Flask app with CORS for A2A protocol
 app = Flask(__name__)
 CORS(app)  # Enable CORS for remote agent access
 
 # Initialize Aurora green agent
-green_agent = AuroraGreenAgent()
+green_agent = AuroraGreenAgentCore()
 
 # ============================================================================
 # A2A Protocol Endpoints

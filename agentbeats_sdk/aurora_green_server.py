@@ -16,14 +16,15 @@ from flask_cors import CORS
 import uuid
 
 # Import core Aurora logic
-from aurora_agent import AuroraGreenAgentSDK
+sys.path.insert(0, str(Path(__file__).parent.parent / "agents"))
+from aurora_core import AuroraGreenAgentCore
 
 # Create Flask app
 app = Flask(__name__)
 CORS(app)
 
 # Initialize Aurora green agent
-green_agent = AuroraGreenAgentSDK()
+green_agent = AuroraGreenAgentCore()
 
 # ============================================================================
 # A2A Protocol Endpoints for AgentBeats
