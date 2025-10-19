@@ -1,6 +1,6 @@
 # Aurora Green Agent 🎵
 
-A production-ready green agent for evaluating white agents on **context-aware travel playlist generation** using the AppWorld benchmark framework.
+A green agent for evaluating white agents on **context-aware travel playlist generation** using the AppWorld benchmark framework.
 
 ---
 
@@ -63,14 +63,6 @@ appworld download data
 # Terminal 3: Run evaluation
 ./scripts/run.sh kickoff
 ```
-
-### Run SDK Version
-
-```bash
-cd agentbeats_sdk
-./run_sdk.sh
-```
-
 ---
 
 ## 📊 Aurora Benchmark
@@ -117,7 +109,7 @@ Aurora uses **26 curated tracks** across 7 cities:
 
 See `appworld_api_provider.py` for complete track listing.
 
----
+<!-- ---
 
 ## 🌐 AgentBeats Integration
 
@@ -140,7 +132,7 @@ Agent URL: https://your-ngrok-url.ngrok.io
 Green Agent: ✅ ON
 ```
 
----
+--- -->
 
 ## 🔧 Development
 
@@ -197,17 +189,17 @@ See `ROADMAP.md` for future development plans:
 - Current weather data (OpenWeather API)
 - Points of interest along route
 
----
+<!-- ---
 
 ## 🛠️ Technical Stack
 
 - **Language:** Python 3.11.13
 - **Framework:** Flask (A2A server)
-- **APIs:** AppWorld-style (Spotify, Phone, Supervisor)
+- **APIs:** AppWorld-style (Spotify)
 - **Protocol:** A2A (Agent-to-Agent)
 - **Platform:** AgentBeats
 
----
+--- -->
 
 ## 📝 License
 
