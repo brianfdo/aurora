@@ -1,0 +1,5 @@
+flask
+flask-cors  # For A2A protocol cross-origin access
+requests
+appworld
+openai  # For LLM-powered white agent
