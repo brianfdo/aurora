@@ -81,7 +81,7 @@ def agent_card():
             'name': 'context-aware-travel-playlists',
             'domain': 'music_recommendation',
             'tasks': 3,
-            'routes': ['LA → SF', 'NYC → Boston', 'Seattle → Portland']
+            'routes': ['LA -> SF', 'NYC -> Boston', 'Seattle -> Portland']
         },
         'evaluation': {
             'metrics': ['context_alignment', 'creativity', 'ux_coherence'],
@@ -258,19 +258,23 @@ def a2a_evaluate():
         task_ids = [t['id'] for t in green_agent.tasks]
     
     # Run evaluation
-    results = green_agent.execute_benchmark(task_ids, white_agent_url)
-    
-    return jsonify({
-        'protocol': 'a2a',
-        'status': 'completed',
-        'results': results
-    })
+    try:
+        results = green_agent.execute_benchmark(task_ids, white_agent_url)
+        return jsonify({'protocol': 'a2a',
+                        'status': 'completed',
+                        'results': results})
+    except Exception as e:
+        # You can log the traceback here if desired
+        return jsonify({'protocol': 'a2a',
+                        'status': 'error',
+                        'message': str(e)}), 500
+
 
 @app.route('/a2a/reset', methods=['POST'])
 def a2a_reset():
     """A2A Reset Endpoint"""
     global green_agent
-    green_agent = AuroraGreenAgent()
+    green_agent = AuroraGreenAgentCore()
     return jsonify({
         'protocol': 'a2a',
         'status': 'reset'

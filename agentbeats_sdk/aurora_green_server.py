@@ -72,7 +72,7 @@ def agent_card():
             'name': 'Aurora',
             'domain': 'music_recommendation',
             'tasks': len(green_agent.tasks),
-            'routes': [f"{t['route']['start']} → {t['route']['end']}" for t in green_agent.tasks]
+            'routes': [f"{t['route']['start']} -> {t['route']['end']}" for t in green_agent.tasks]
         },
         
         'evaluation': {
@@ -214,11 +214,17 @@ def a2a_evaluate():
 @app.route('/a2a/reset', methods=['POST'])
 def a2a_reset():
     """Reset agent state"""
+    global green_agent
+    green_agent = AuroraGreenAgentCore()
     return jsonify({
         'protocol': 'a2a',
         'status': 'reset',
-        'message': 'Aurora Green Agent (SDK) state reset.'
+        'metadata': {
+            'total_tasks': len(green_agent.tasks),
+            'available_apis': getattr(green_agent, 'available_apis', None) or getattr(green_agent, 'available_apps', None)
+        }
     })
+
 
 # ============================================================================
 # Launcher Endpoints (for AgentBeats platform integration)

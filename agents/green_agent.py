@@ -58,13 +58,27 @@ def evaluate():
         "task_ids": ["aurora_001"]  // optional
     }
     """
-    data = request.json or {}
+    data = request.get_json(silent=True) or {}
     white_agent_url = data.get('white_agent_url', 'http://localhost:9000')
-    task_ids = data.get('task_ids') or [t['id'] for t in green_agent.tasks]
+    if not white_agent_url:
+        return jsonify({'error': 'white_agent_url is required'}), 400
     
-    results = green_agent.execute_benchmark(task_ids, white_agent_url)
-    return jsonify({'status': 'completed', 'results': results})
-
+    task_ids = data.get('task_ids')
+    if task_ids is None:
+        task_ids = [t['id'] for t in green_agent.tasks]
+    else:
+        known = {t['id'] for t in green_agent.tasks}
+        unknown = [tid for tid in task_ids if tid not in known]
+        if unknown:
+            return jsonify({'error': f'unknown task_ids: {unknown}'}), 404
+        
+    try:
+        results = green_agent.execute_benchmark(task_ids, white_agent_url)
+        return jsonify({'status': 'completed',
+                        'results': results})
+    except Exception as e:
+        return jsonify({'status': 'error',
+                        'message': str(e)}), 500
 
 if __name__ == '__main__':
     import argparse
