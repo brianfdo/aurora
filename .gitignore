@@ -50,3 +50,9 @@ data/
 
 # Temporary files
 nohup.out
+
+# Cloudflare tunnel binary
+cloudflared
+
+# Test files
+test_*.py

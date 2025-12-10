@@ -1,34 +1,25 @@
 """
-AppWorld API Provider for Aurora Green Agent
+AppWorld API Provider - Deterministic Mock APIs
 
-Provides real AppWorld-style APIs (Spotify, Phone, etc.) to the white agent's code execution.
-This bridges Aurora's custom task structure with AppWorld's API layer.
-
-For now, this provides enhanced mock APIs with AppWorld's API signatures.
-In the future, this can be extended to use real AppWorld backend services.
+Provides deterministic AppWorld-style APIs (Spotify, Phone, etc.) 
+for white agent code execution.
 """
 
-import json
-import random
 from typing import Dict, Any, List
-from pathlib import Path
 
 
 class AppWorldAPIProvider:
     """
     Provides AppWorld-style APIs for code execution.
     
-    This class provides APIs that match AppWorld's interface but work
-    without requiring the full AppWorld task infrastructure.
+    All APIs are deterministic - same inputs always produce same outputs.
     """
     
     def __init__(self):
         """Initialize AppWorld API provider."""
-        print("Initializing AppWorld-style APIs...")
-        self.available_apps = ['spotify', 'phone', 'supervisor', 'amazon', 'gmail']
-        print(f"✓ APIs ready: {self.available_apps}")
+        self.available_apps = ['spotify', 'phone', 'supervisor']
     
-    def get_api_namespace(self, route_data: Dict = None) -> 'APINamespace':
+    def get_api_namespace(self, route_data: Dict = None) -> 'AppWorldAPINamespace':
         """
         Get an API namespace object for code execution.
         
@@ -42,12 +33,7 @@ class AppWorldAPIProvider:
 
 
 class AppWorldAPINamespace:
-    """
-    Namespace providing AppWorld-style APIs.
-    
-    This provides APIs that match AppWorld's interface and return
-    realistic data for playlist generation.
-    """
+    """Namespace providing AppWorld-style APIs."""
     
     def __init__(self, route_data: Dict = None):
         self.route_data = route_data or {}
@@ -60,9 +46,9 @@ class AppWorldAPINamespace:
 
 class SpotifyAPI:
     """
-    AppWorld-style Spotify API.
+    Deterministic Spotify API.
     
-    Provides realistic music search functionality matching AppWorld's API.
+    Same query always returns same results (deterministic).
     """
     
     # Curated music database for different queries
@@ -114,9 +100,9 @@ class SpotifyAPI:
     
     def search_tracks(self, query: str, limit: int = 5) -> List[Dict]:
         """
-        Search for tracks by query.
+        Search for tracks by query (deterministic).
         
-        This matches AppWorld's Spotify API signature.
+        Same query always returns same results.
         
         Args:
             query: Search query (artist, genre, city, mood, etc.)
@@ -127,7 +113,7 @@ class SpotifyAPI:
         """
         query_lower = query.lower()
         
-        # Try to find relevant tracks based on query
+        # Try to find relevant tracks based on query (deterministic)
         results = []
         
         # Check if query matches a city in our database
@@ -148,27 +134,23 @@ class SpotifyAPI:
                 if len(results) >= limit:
                     break
         
-        # If still no results, return generic tracks based on query
+        # If still no results, return generic tracks (deterministic based on query)
         if not results:
             results = [
                 {
                     'title': f'Track {i+1} for {query[:30]}',
                     'artist': f'Artist {i+1}',
-                    'id': f'spotify_gen_{i}'
+                    'id': f'spotify_gen_{hash(query) % 10000}_{i}'
                 }
                 for i in range(min(limit, 3))
             ]
         
-        # Return limited results
+        # Return limited results (deterministic order)
         return results[:limit]
 
 
 class PhoneAPI:
-    """
-    AppWorld-style Phone API.
-    
-    Provides contact information with location context.
-    """
+    """AppWorld-style Phone API (deterministic)."""
     
     CONTACTS = [
         {'name': 'Alex Chen', 'location': 'San Francisco', 'phone': '415-555-0101'},
@@ -183,60 +165,36 @@ class PhoneAPI:
         self.route_data = route_data or {}
     
     def get_contacts(self) -> List[Dict]:
-        """
-        Get all contacts.
-        
-        Returns:
-            List of contact dictionaries with 'name', 'location', 'phone'
-        """
-        return self.CONTACTS
+        """Get all contacts (deterministic)."""
+        return self.CONTACTS.copy()
     
     def get_contacts_by_location(self, location: str) -> List[Dict]:
-        """
-        Get contacts filtered by location.
-        
-        Args:
-            location: City or location name
-            
-        Returns:
-            List of contacts in that location
-        """
+        """Get contacts filtered by location (deterministic)."""
         location_lower = location.lower()
         return [
-            contact for contact in self.CONTACTS
+            contact.copy() for contact in self.CONTACTS
             if location_lower in contact['location'].lower()
         ]
 
 
 class SupervisorAPI:
-    """
-    AppWorld-style Supervisor API.
-    
-    Provides environment and context information.
-    """
+    """AppWorld-style Supervisor API (deterministic)."""
     
     def __init__(self, route_data: Dict = None):
         self.route_data = route_data or {}
     
     def get_current_context(self) -> Dict:
-        """
-        Get current execution context.
-        
-        Returns:
-            Dictionary with context information
-        """
+        """Get current execution context (deterministic)."""
         return {
             'environment': 'aurora',
             'benchmark': 'context-aware-travel-playlists',
-            'route': self.route_data,
+            'route': self.route_data.copy(),
             'available_apis': ['spotify', 'phone', 'supervisor']
         }
 
 
-# ============================================================================
-# Helper function
-# ============================================================================
-
-def create_api_provider():
+def create_api_provider() -> AppWorldAPIProvider:
     """Factory function to create API provider."""
     return AppWorldAPIProvider()
+
+

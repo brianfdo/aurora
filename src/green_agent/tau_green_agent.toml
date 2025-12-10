@@ -1,0 +1,27 @@
+name = "aurora_green_agent"
+description = "Deterministic evaluator for white agents on context-aware travel playlist generation"
+version = "1.0.0"
+
+defaultInputModes = ["text", "json"]
+defaultOutputModes = ["text", "json"]
+
+[capabilities]
+streaming = false
+
+[[skills]]
+id = "aurora_playlist_eval"
+name = "Aurora playlist evaluation"
+description = """
+Evaluate white agents on context-aware travel playlist generation for road trips.
+"""
+tags = ["green agent", "evaluation", "music", "playlist", "aurora"]
+examples = ["""    
+Your task is to evaluate a white agent located at:
+<white_agent_url>
+http://localhost:9000/
+</white_agent_url>
+You should evaluate on the following tasks:
+<task_ids>
+["aurora_001", "aurora_002", "aurora_003"]
+</task_ids>
+"""]

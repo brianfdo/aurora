@@ -1,5 +1,5 @@
-flask
-flask-cors  # For A2A protocol cross-origin access
-requests
-appworld
-openai  # For LLM-powered white agent
+requests>=2.31.0
+a2a-server
+uvicorn
+python-dotenv
+tomli; python_version < '3.11'
