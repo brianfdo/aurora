@@ -1,6 +1,7 @@
 name = "aurora_green_agent"
 description = "Deterministic evaluator for white agents on context-aware travel playlist generation"
 version = "1.0.0"
+url = "http://localhost:8000"
 
 defaultInputModes = ["text", "json"]
 defaultOutputModes = ["text", "json"]

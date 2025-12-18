@@ -6,9 +6,24 @@
         "start": "Los Angeles",
         "end": "San Francisco",
         "legs": [
-          {"leg_id": "la", "city": "Los Angeles", "weather": {"conditions": "Sunny", "temp": 75}},
-          {"leg_id": "sb", "city": "Santa Barbara", "weather": {"conditions": "Cloudy", "temp": 68}},
-          {"leg_id": "sf", "city": "San Francisco", "weather": {"conditions": "Foggy", "temp": 60}}
+          {
+            "leg_id": "la",
+            "city": "Los Angeles",
+            "weather": { "conditions": "sunny", "temp": 92 },
+            "time": "afternoon"
+          },
+          {
+            "leg_id": "sb",
+            "city": "Santa Barbara",
+            "weather": { "conditions": "cloudy", "temp": 68 },
+            "time": "evening"
+          },
+          {
+            "leg_id": "sf",
+            "city": "San Francisco",
+            "weather": { "conditions": "foggy", "temp": 55 },
+            "time": "night"
+          }
         ]
       }
     },
@@ -18,8 +33,18 @@
         "start": "New York",
         "end": "Boston",
         "legs": [
-          {"leg_id": "ny", "city": "New York", "weather": {"conditions": "Clear", "temp": 65}},
-          {"leg_id": "bos", "city": "Boston", "weather": {"conditions": "Rainy", "temp": 58}}
+          {
+            "leg_id": "ny",
+            "city": "New York",
+            "weather": { "conditions": "clear", "temp": 64 },
+            "time": "morning"
+          },
+          {
+            "leg_id": "bos",
+            "city": "Boston",
+            "weather": { "conditions": "rainy", "temp": 41 },
+            "time": "evening"
+          }
         ]
       }
     },
@@ -29,8 +54,24 @@
         "start": "Seattle",
         "end": "Portland",
         "legs": [
-          {"leg_id": "sea", "city": "Seattle", "weather": {"conditions": "Rainy", "temp": 52}},
-          {"leg_id": "pdx", "city": "Portland", "weather": {"conditions": "Overcast", "temp": 55}}
+          {
+            "leg_id": "sea",
+            "city": "Seattle",
+            "weather": { "conditions": "rainy", "temp": 52 },
+            "time": "late_night"
+          },
+          {
+            "leg_id": "olympia",
+            "city": "Olympia",
+            "weather": { "conditions": "overcast", "temp": 50 },
+            "time": "early_morning"
+          },
+          {
+            "leg_id": "pdx",
+            "city": "Portland",
+            "weather": { "conditions": "cloudy", "temp": 57 },
+            "time": "morning"
+          }
         ]
       }
     }

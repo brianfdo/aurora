@@ -1,0 +1,29 @@
+name = "aurora_green_agent"
+version = "1.0.0"
+description = "Deterministic evaluator for white agents on context-aware travel playlist generation"
+url = "https://tablet-artistic-removing-pays.trycloudflare.com"
+preferredTransport = "JSONRPC"
+protocolVersion = "0.3.0"
+
+defaultInputModes = ["text", "json"]
+defaultOutputModes = ["text", "json"]
+
+[capabilities]
+streaming = false
+
+[[skills]]
+id = "aurora_playlist_eval"
+name = "Aurora playlist evaluation"
+description = "Evaluate white agents on context-aware travel playlist generation"
+tags = ["green agent", "evaluation", "music", "playlist", "aurora"]
+
+examples = [
+  """
+Your task is to evaluate a white agent located at:
+http://localhost:9000/
+
+You should evaluate on the following tasks:
+["aurora_001", "aurora_002", "aurora_003"]
+"""
+]
+

@@ -9,6 +9,7 @@ import time
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 import requests
+from starlette.responses import JSONResponse
 
 try:
     from a2a.server.apps import A2AStarletteApplication
@@ -238,8 +239,17 @@ Please generate code to create a playlist for this task."""
             context_score = self._score_context_alignment(playlist, expected_cities)
             creativity_score = self._score_creativity(playlist)
             ux_score = self._score_ux_coherence(playlist, expected_cities)
-            
-            aurora_score = context_score * 0.4 + creativity_score * 0.3 + ux_score * 0.3
+
+            weather_score = self._score_weather_time_alignment(playlist, task)
+            transition_score = self._score_transition_smoothness(playlist)
+
+            aurora_score = (
+                context_score * 0.30 +
+                creativity_score * 0.25 +
+                ux_score * 0.20 +
+                weather_score * 0.15 +
+                transition_score * 0.10
+            )
             
             return {
                 'task_id': task_id,
@@ -247,12 +257,49 @@ Please generate code to create a playlist for this task."""
                 'context_alignment': round(context_score, 3),
                 'creativity': round(creativity_score, 3),
                 'ux_coherence': round(ux_score, 3),
+                'weather_alignment': round(weather_score, 3),
+                'transition_smoothness': round(transition_score, 3),
                 'passed': aurora_score >= 0.5,
                 'playlist_length': len(playlist)
             }
+
         except Exception as e:
             return {'task_id': task_id, 'error': f'Evaluation failed: {str(e)}', 'aurora_score': 0.0}
-    
+
+    def _score_weather_time_alignment(self, playlist: List[Dict], task: Dict) -> float:
+        """
+        Reward tracks whose titles/artists loosely match weather or time-of-day context.
+        Very light heuristic — non-punitive.
+        """
+        score = 0
+        total = 0
+
+        for item in playlist:
+            leg_id = item.get("leg_id")
+            leg = next(
+                (l for l in task["route"]["legs"] if l.get("leg_id") == leg_id),
+                None
+            )
+            if not leg:
+                continue
+
+            weather = leg.get("weather", {}).get("conditions", "").lower()
+            time_of_day = leg.get("time", "").lower()
+
+            for track in item.get("tracks", []):
+                title = str(track.get("title", "")).lower()
+
+                if weather in ["rainy", "foggy"] and any(w in title for w in ["chill", "ambient"]):
+                    score += 1
+                if weather == "sunny" and any(w in title for w in ["summer", "sun"]):
+                    score += 1
+                if time_of_day in ["night", "late_night"] and "night" in title:
+                    score += 1
+
+                total += 1
+
+        return min(1.0, score / max(total, 1))
+
     def _score_context_alignment(self, playlist: List[Dict], expected_cities: List[str]) -> float:
         """Score how well playlist matches route cities."""
         if not playlist:
@@ -311,8 +358,9 @@ Please generate code to create a playlist for this task."""
         
         unique_ratio = len(artists) / len(all_tracks) if all_tracks else 0.0
         track_count_score = min(1.0, len(all_tracks) / 10.0)
-        
-        return unique_ratio * 0.6 + track_count_score * 0.4
+        repeat_penalty = 0.15 if len(artists) < len(all_tracks) / 2 else 0.0
+
+        return max(0.0, unique_ratio * 0.6 + track_count_score * 0.4 - repeat_penalty)
     
     def _score_ux_coherence(self, playlist: List[Dict], expected_cities: List[str]) -> float:
         """Score UX coherence: structure and completeness."""
@@ -396,7 +444,6 @@ if A2A_AVAILABLE:
         async def cancel(self, context: RequestContext, event_queue: EventQueue) -> None:
             raise NotImplementedError
 
-
 def load_agent_card_toml(agent_name: str = "tau_green_agent") -> Dict[str, Any]:
     """Load agent card from TOML file."""
     if not tomllib:
@@ -408,56 +455,79 @@ def load_agent_card_toml(agent_name: str = "tau_green_agent") -> Dict[str, Any]:
     with open(toml_file, "rb") as f:
         return tomllib.load(f)
 
-
-def start_green_agent(agent_name: str = "tau_green_agent", host: str = "0.0.0.0", port: int = 8001):
+def start_green_agent(
+    agent_name: str = "tau_green_agent",
+    host: str = "0.0.0.0",
+    port: int = 8001,
+):
     """Start the Aurora green agent using A2A Starlette application."""
+
     if not A2A_AVAILABLE:
         raise ImportError(
-            "a2a-sdk required. Install: pip install 'a2a-sdk[http-server]' uvicorn\n"
-            "Or use: uv sync (if using uv)"
+            "a2a-sdk required. Install: pip install 'a2a-sdk[http-server]' uvicorn"
         )
-    
-    import uvicorn
+
     import os
     import dotenv
-    
+    import uvicorn
+
     dotenv.load_dotenv()
-    
+
     print("Starting Aurora green agent...")
+
     agent_card_dict = load_agent_card_toml(agent_name)
-    
-    # Use CLOUDRUN_HOST from environment if set (for Cloudflare tunnel)
-    # Otherwise use AGENT_URL if set, otherwise use host:port
-    cloudrun_host = os.getenv("CLOUDRUN_HOST")
-    agent_url = os.getenv("AGENT_URL")
-    
-    if cloudrun_host:
-        # CLOUDRUN_HOST specifies the cloudflared forwarded domain name
-        https_enabled = os.getenv("HTTPS_ENABLED", "false").lower() == "true"
-        protocol = "https" if https_enabled else "http"
-        agent_url = f"{protocol}://{cloudrun_host}"
-    elif agent_url:
-        # Fallback to AGENT_URL if set
-        agent_url = agent_url
+
+    # Resolve public agent URL (authoritative order)
+    agent_url = (
+        os.getenv("AGENT_PUBLIC_URL")  # ← preferred, explicit
+        or os.getenv("CLOUDRUN_HOST")  # ← managed platforms
+    )
+
+    if agent_url:
+        # Normalize protocol
+        if not agent_url.startswith("http"):
+            agent_url = f"https://{agent_url}"
     else:
-        # Default to localhost
+        # Local fallback ONLY
         agent_url = f"http://{host}:{port}"
-    
+
+
     agent_card_dict["url"] = agent_url
-    
+
+    # --- Build A2A application ---
     request_handler = DefaultRequestHandler(
         agent_executor=AuroraGreenAgentExecutor(),
         task_store=InMemoryTaskStore(),
     )
-    
-    app = A2AStarletteApplication(
+
+    a2a_app = A2AStarletteApplication(
         agent_card=AgentCard(**agent_card_dict),
         http_handler=request_handler,
     )
+
+    app = a2a_app.build()
+
+    @app.route("/", methods=["GET"])
+    async def agent_card_root(request):
+        return JSONResponse(agent_card_dict)
+
     
-    print(f"🎵 Aurora Green Agent - A2A Server")
+    @app.route("/a2a/health", methods=["GET"])
+    async def a2a_health(request):
+        return JSONResponse({
+            "status": "healthy",
+            "protocol": "a2a",
+            "version": "1.0",
+        })
+
+    @app.route("/status", methods=["GET"])
+    async def status(request):
+        return JSONResponse({"status": "ok"})
+
+
+    print("🎵 Aurora Green Agent - A2A Server")
     print(f"✓ Listening on {host}:{port}")
     print(f"✓ Agent URL: {agent_url}")
     print("=" * 70)
-    
-    uvicorn.run(app.build(), host=host, port=port)
+
+    uvicorn.run(app, host=host, port=port)

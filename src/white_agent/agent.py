@@ -1,8 +1,12 @@
 """
-Aurora White Agent - Deterministic Playlist Generator
+Aurora White Agent - AppWorld Baseline (Deterministic Playlist Generator)
 
-Refactored to follow A2A Starlette format while keeping deterministic logic.
+This agent serves as a deterministic baseline white agent in an
+AppWorld-style evaluation. It generates executable Python code
+that interacts with sandboxed local APIs and is evaluated by an
+external green agent.
 """
+
 
 import json
 import uvicorn
@@ -29,13 +33,18 @@ def prepare_white_agent_card(url: str) -> AgentCard:
     skill = AgentSkill(
         id="playlist_generation",
         name="Playlist Generation",
-        description="Generates travel playlist code using deterministic template-based approach",
-        tags=["music", "playlist", "deterministic"],
+        description=(
+            "Baseline AppWorld white-agent skill that deterministically generates "
+            "executable Python code for travel playlist construction using sandboxed APIs"
+        ),
+        tags=["music", "playlist", "deterministic", "appworld", "baseline"],
         examples=[],
     )
     card = AgentCard(
-        name="aurora_white_agent",
-        description="Deterministic playlist generator for Aurora benchmark",
+        name="aurora_white_agent_appworld_baseline",
+        description="Deterministic AppWorld baseline white agent for travel playlist generation. "
+        "Produces executable Python code that interacts with sandboxed APIs "
+        "and is evaluated by an external green agent.",
         url=url,
         version="1.0.0",
         default_input_modes=["text/plain"],
@@ -76,21 +85,41 @@ class AuroraWhiteAgentExecutor(AgentExecutor):
         for leg in legs:
             city = leg.get('city', '')
             leg_id = leg.get('leg_id', '')
+            weather = leg.get('weather', {}).get('conditions', '')
             
             code_lines.extend([
                 f"# Leg: {city}",
                 f"city = '{city}'",
-                f"# Search for tracks related to {city}",
-                f"tracks = apis.spotify.search_tracks(query=f\"{{city}} music\", limit=3)",
+                f"weather = '{weather}'",
+                f"# Search for tracks related to city and weather",
+                f"tracks = apis.spotify.search_tracks(query=f\"{{city}} {{weather}} vibes music\", limit=5)",
+                "",
+                "# Deduplicate artists for creativity",
+                "seen_artists = set()",
+                "filtered_tracks = []",
+                "for t in tracks or []:",
+                "    artist = t.get('artist')",
+                "    if artist and artist.lower() not in seen_artists:",
+                "        filtered_tracks.append(t)",
+                "        seen_artists.add(artist.lower())",
+                "    if len(filtered_tracks) >= 3:",
+                "        break",
+                "",
+                "# Fallback if no tracks found",
+                "if not filtered_tracks:",
+                "    filtered_tracks = [{",
+                f"        'title': '{city} Drive',",
+                "        'artist': 'Unknown Artist'",
+                "    }]",
                 "",
                 "playlist.append({",
                 f"    'leg_id': '{leg_id}',",
-                f"    'city': city,",
-                "    'tracks': tracks[:3] if isinstance(tracks, list) else []",
+                "    'city': city,",
+                "    'tracks': filtered_tracks",
                 "})",
                 "",
             ])
-        
+
         return "\n".join(code_lines)
     
     async def execute(self, context: RequestContext, event_queue: EventQueue) -> None:
@@ -254,7 +283,7 @@ def start_white_agent(agent_name: str = "aurora_white_agent", host: str = "local
         return JSONResponse({
             'code': code,
             'task_id': task_id,
-            'method': 'deterministic_template'
+            'method': 'deterministic_appworld_baseline'
         })
     
     async def health_endpoint(request):
