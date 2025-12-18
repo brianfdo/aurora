@@ -1,6 +1,26 @@
-# Aurora Green Agent
+# Aurora 
 
-Deterministic green agent for evaluating white agents.
+## Overview
+Aurora is a deterministic evaluation benchmark inspired by AppWorld, designed to evaluate white agents that generate travel playlists. A white agent produces executable playlist-generation code, and the green agent evaluates the output using deterministic, rule-based metrics without relying on LLMs or external services.
+
+## Repository Structure
+- `src/white_agent/` — Deterministic white agent that generates playlist code.
+- `src/green_agent/` — Aurora green agent that executes and evaluates white agent outputs.
+- `aurora_tasks.json` — Fixed benchmark task definitions (routes, cities, weather).
+- `src/my_util/appworld_api.py` — Local sandboxed APIs used during evaluation.
+- `main.py` — Entry point for running agents.
+
+## Evaluation Metrics
+
+Playlists are evaluated deterministically using the following metrics:
+
+- Context Alignment (30%)
+- Creativity / Diversity (25%)
+- UX Coherence (20%)
+- Weather & Time Alignment (15%)
+- Transition Smoothness (10%)
+
+Metric weights are fixed in code to ensure reproducibility. Aggregate statistics (min/max/mean) are computed across runs to detect instability or score drift.
 
 ## Run Agents
 

@@ -74,6 +74,27 @@
           }
         ]
       }
+    },
+    {
+      "id": "aurora_negative_empty_playlist",
+      "route": {
+        "start": "Test City A",
+        "end": "Test City B",
+        "legs": [
+          {
+            "leg_id": "leg_1",
+            "city": "Test City A",
+            "weather": { "conditions": "sunny" },
+            "time": "day"
+          },
+          {
+            "leg_id": "leg_2",
+            "city": "Test City B",
+            "weather": { "conditions": "rainy" },
+            "time": "night"
+          }
+        ]
+      }
     }
   ]
 }

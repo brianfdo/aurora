@@ -98,6 +98,28 @@ class AuroraGreenAgent:
             
         except Exception as e:
             return {'task_id': task_id, 'error': str(e), 'aurora_score': 0.0}
+    def _summarize_metrics(self, results: List[Dict[str, Any]]) -> Dict[str, Dict[str, float]]:
+    """Compute simple summary statistics for evaluation metrics."""
+    metrics = [
+        "aurora_score",
+        "context_alignment",
+        "creativity",
+        "ux_coherence",
+        "weather_alignment",
+        "transition_smoothness",
+    ]
+
+    summary = {}
+    for m in metrics:
+        values = [r.get(m, 0.0) for r in results if m in r]
+        if not values:
+            continue
+        summary[m] = {
+            "min": round(min(values), 3),
+            "max": round(max(values), 3),
+            "mean": round(sum(values) / len(values), 3),
+        }
+    return summary
     
     def _get_code_via_http(self, task_id: str, task: Dict, white_agent_url: str) -> str:
         """Get code from white agent via HTTP POST to /solve endpoint."""
@@ -184,37 +206,69 @@ Please generate code to create a playlist for this task."""
         for task_id in task_ids:
             result = self.execute_task(task_id, white_agent_url, use_a2a=use_a2a)
             results.append(result)
-        
+
         scores = [r.get('aurora_score', 0) for r in results if 'aurora_score' in r]
         avg_score = sum(scores) / len(scores) if scores else 0
-        
+
+        metric_summary = self._summarize_metrics(results)
+
         return {
             'benchmark': 'aurora',
             'total_tasks': len(task_ids),
             'results': results,
             'average_aurora_score': round(avg_score, 3),
+            'metric_summary': metric_summary,
             'passed': avg_score >= 0.5,
             'protocol_used': 'A2A' if use_a2a else 'HTTP'
         }
     
     def _execute_code(self, code: str, task: Dict) -> Dict[str, Any]:
-        """Execute white agent code in controlled environment."""
+        """Execute white agent code in a controlled sandboxed environment."""
+        task_id = task.get("id", "unknown")
+
         try:
-            apis = self.api_provider.get_api_namespace(route_data=task.get('route'))
+            apis = self.api_provider.get_api_namespace(
+                route_data=task.get("route")
+            )
             exec_globals = {
-                'route': task['route'],
-                'playlist': [],
-                'json': json,
-                'apis': apis
+                "route": task["route"],
+                "playlist": [],
+                "json": json,
+                "apis": apis,
             }
             exec(code, exec_globals)
-            playlist = exec_globals.get('playlist', [])
-            return self._evaluate_playlist_deterministic(task['id'], playlist, task)
+            playlist = exec_globals.get("playlist", [])
+
+            if not isinstance(playlist, list):
+                return {
+                    "task_id": task_id,
+                    "error": "Invalid playlist format (expected list)",
+                    "aurora_score": 0.0,
+                }
+
+            result = self._evaluate_playlist_deterministic(
+                task_id=task_id,
+                playlist=playlist,
+                task=task,
+            )
+
+            print(
+                f"[Aurora Eval] {task_id} | "
+                f"Context={result.get('context_alignment')}, "
+                f"Creativity={result.get('creativity')}, "
+                f"UX={result.get('ux_coherence')}, "
+                f"Weather={result.get('weather_alignment')}, "
+                f"Transition={result.get('transition_smoothness')}, "
+                f"Score={result.get('aurora_score')}"
+            )
+
+            return result
+
         except Exception as e:
             return {
-                'task_id': task['id'],
-                'error': f'Code execution failed: {str(e)}',
-                'aurora_score': 0.0
+                "task_id": task_id,
+                "error": f"Code execution failed: {str(e)}",
+                "aurora_score": 0.0,
             }
     
     def _create_instruction(self, task: Dict) -> str:
